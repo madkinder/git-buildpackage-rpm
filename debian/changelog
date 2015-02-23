@@ -1,3 +1,9 @@
+git-buildpackage (0.7.0-tizen20151027) UNRELEASED; urgency=low
+
+  *  Rebase on top of upstream version 0.7.0
+
+ -- Markus Lehtonen <markus.lehtonen@linux.intel.com>  Tue, 27 Oct 2015 10:05:38 +0200
+
 git-buildpackage (0.7.0) unstable; urgency=medium
 
   [ Guido Günther ]
