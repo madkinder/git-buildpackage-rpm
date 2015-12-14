@@ -23,12 +23,34 @@ import subprocess
 import os
 import os.path
 import signal
+import sys
+from tempfile import TemporaryFile
+
 import gbp.log as log
 
 class CommandExecFailed(Exception):
     """Exception raised by the Command class"""
     pass
 
+class StdfProxy(object):
+    """
+    Relay input data to stdout/stderr. Designed to work around a problem where
+    Python nose replaces sys.stdout/stderr with a custom 'Tee' object that is
+    not a file object (compatible) and thus causes a crash with Popen.
+    """
+    def __init__(self, stdfname):
+        self.stdfname = stdfname
+        self.safed = getattr(sys, self.stdfname)
+        self.filed = TemporaryFile()
+        setattr(sys, self.stdfname, self.filed)
+
+    def closedown(self):
+        self.filed.seek(0)
+        self.safed.write(self.filed.read())
+        setattr(sys, self.stdfname, self.safed)
+
+    def __getattr__(self, name):
+        return getattr(self.filed, name)
 
 class Command(object):
     """
@@ -67,8 +89,20 @@ class Command(object):
 
         log.debug("%s %s %s" % (self.cmd, self.args, args))
         self._reset_state()
-        stdout_arg = subprocess.PIPE if self.capture_stdout else None
-        stderr_arg = subprocess.PIPE if self.capture_stderr else None
+        if self.capture_stdout:
+            stdout_arg = subprocess.PIPE
+        elif hasattr(sys.stdout, 'fileno'):
+            stdout_arg = sys.stdout
+        else:
+            # For nosetests where sys.stdout is replaced by a "Tee" object
+            stdout_arg = StdfProxy('stdout')
+        if self.capture_stderr:
+            stderr_arg = subprocess.PIPE
+        elif hasattr(sys.stderr, 'fileno'):
+            stderr_arg = sys.stderr
+        else:
+            # For nosetests where sys.stderr is replaced by a "Tee" object
+            stderr_arg = StdfProxy('stderr')
         cmd = [ self.cmd ] + self.args + args
         if self.shell:
             # subprocess.call only cares about the first argument if shell=True
@@ -87,6 +121,11 @@ class Command(object):
             self.err_reason = "execution failed: %s" % str(err)
             self.retcode = 1
             raise
+        finally:
+            if isinstance(stdout_arg, StdfProxy):
+                stdout_arg.closedown()
+            if isinstance(stderr_arg, StdfProxy):
+                stderr_arg.closedown()
 
         self.retcode = popen.returncode
         if self.retcode < 0:

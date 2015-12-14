@@ -32,7 +32,10 @@ import gbp.log
 # when we want to reference the index in a treeish context we call it:
 index_name = "INDEX"
 # when we want to reference the working copy in treeish context we call it:
-wc_name = "WC"
+wc_names = {'WC':           {'force': True, 'untracked': True},
+            'WC.TRACKED':   {'force': False, 'untracked': False},
+            'WC.UNTRACKED': {'force': False, 'untracked': True},
+            'WC.IGNORED':   {'force': True, 'untracked': True}}
 # index file name used to export working copy
 wc_index = ".git/gbp_index"
 
@@ -154,9 +157,10 @@ def dump_tree(repo, export_dir, treeish, with_submodules, recursive=True):
     return True
 
 
-def write_wc(repo, force=True):
+def write_wc(repo, force=True, untracked=True):
     """write out the current working copy as a treeish object"""
-    repo.add_files(repo.path, force=force, index_file=wc_index)
+    clone_index()
+    repo.add_files(repo.path, force=force, untracked=untracked, index_file=wc_index)
     tree = repo.write_tree(index_file=wc_index)
     return tree
 
@@ -165,3 +169,9 @@ def drop_index():
     """drop our custom index"""
     if os.path.exists(wc_index):
         os.unlink(wc_index)
+
+def clone_index():
+    """Copy the current index file to our custom index file"""
+    indexfn = ".git/index"
+    if os.path.exists(indexfn):
+        shutil.copy2(indexfn, wc_index)
