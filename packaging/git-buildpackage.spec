@@ -110,10 +110,10 @@ Requires:   rpm
 Requires:   %{rpm_python_pkg_name}
 %if 0%{?suse_version} || 0%{?tizen_version:1}
 Recommends: rpm-build
+Provides:   tizen-gbp-rpm = 20151027
 %else
 Requires:   rpm-build
 %endif
-Provides:   tizen-gbp-rpm = 20151027
 
 %description rpm
 Set of tools from Debian that integrate the package build system with Git.
