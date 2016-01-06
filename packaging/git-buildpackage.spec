@@ -108,7 +108,7 @@ Group:      Development/Tools/Building
 Requires:   %{name}-common = %{version}-%{release}
 Requires:   rpm
 Requires:   %{rpm_python_pkg_name}
-%if 0%{?suse_version} || 0%{?tizen_version:1}
+%if 0%{?tizen_version:1}
 Recommends: rpm-build
 %else
 Requires:   rpm-build
