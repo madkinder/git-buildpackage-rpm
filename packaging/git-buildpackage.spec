@@ -125,7 +125,7 @@ Summary:    Build with BitBake from git
 Group:      Development/Tools/Building
 Requires:   %{name}-common = %{version}-%{release}
 Requires:   %{name}-rpm = %{version}-%{release}
-%if 0%{?suse_version} || 0%{?tizen_version:1}
+%if 0%{?tizen_version:1}
 Recommends: bitbake
 %endif
 
